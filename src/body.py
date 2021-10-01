@@ -1,8 +1,11 @@
 import numpy as np
-from transform import *
+from transform import create_rotation_matrix
 
 
 class Body:
+    """
+        Physical environment simulation element
+    """
     def __init__(self):
         self.__pos = np.zeros((1, 3))
         self.__rotation_matrix = np.identity(3)
@@ -31,6 +34,10 @@ class Body:
     @property
     def direction(self):
         return self.__get_dir()
+
+    @property
+    def rotation(self):
+        return self.__rotation_matrix
 
     def __get_dir(self):
         dir = np.array([[1, 0, 1]])

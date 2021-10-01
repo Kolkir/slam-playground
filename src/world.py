@@ -4,6 +4,9 @@ import pygame
 
 
 class World:
+    """
+        Physical environment simulation element
+    """
     def __init__(self, map_file_name):
         self.__map_file_name = map_file_name
         self.__width = 0
