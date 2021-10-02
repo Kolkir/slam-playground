@@ -41,8 +41,8 @@ class World:
         return num == 0
 
     def get_obstacles_in_circle(self, pos, radius):
-        x = self.__width // 2 + pos[0][1]
-        y = self.__height // 2 - pos[0][0]
+        x = self.__width // 2 + pos[1]
+        y = self.__height // 2 - pos[0]
         x = np.clip(x, 0, self.__width).astype(int)
         y = np.clip(y, 0, self.__height).astype(int)
 

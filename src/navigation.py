@@ -3,7 +3,7 @@ import pygame
 
 from skimage.draw import line_aa
 
-from src.frame import Transform, Frame
+from src.frame import Frame
 from src.icp import ICP
 from transform import to_screen_coords
 
@@ -39,7 +39,7 @@ class Navigation:
         obstacles = sensor.get_obstacles()
         if obstacles is not None:
             obstacles = obstacles.copy()
-            obstacles += odometry.position[0, :2].astype(int)
+            obstacles += odometry.position[:2].astype(int)
             obstacles[:, 0] = self.__h // 2 - obstacles[:, 0]
             obstacles[:, 1] += self.__w // 2
             # noise in the odometry can break coordinates
@@ -48,14 +48,16 @@ class Navigation:
             self.__map[obstacles[:, 0], obstacles[:, 1]] = 0
 
         # create key frame
-        tr = (odometry.position, odometry.rotation)
-        frame_candidate = Frame(tr, sensor.get_obstacles())
-        # check if we can align current frame with last ones
-        for key_frame in self.__frames[-self.__last_num_to_check:]:
-            tr, align_error = self.__icp.find_transform(key_frame, frame_candidate)
-            if align_error < self.__frame_align_error:
-                # if we were able to align - add new key frame
-                self.__frames.append(frame_candidate)
+        # frame_candidate = Frame(odometry.position, odometry.rotation, sensor.get_obstacles())
+        # if len(self.__frames) > 0:
+        #     # check if we can align current frame with last ones
+        #     for key_frame in self.__frames[-self.__last_num_to_check:]:
+        #         tr, align_error = self.__icp.find_transform(key_frame, frame_candidate)
+        #         if align_error < self.__frame_align_error:
+        #             # if we were able to align - add new key frame
+        #             self.__frames.append(frame_candidate)
+        # else:
+        #     self.__frames.append(frame_candidate)
 
     def draw(self, screen, offset):
         transposed_map = np.transpose(self.__map)

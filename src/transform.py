@@ -10,14 +10,8 @@ def create_rotation_matrix(angle):
     return mat
 
 
-def create_translation_matrix(pos):
-    mat = np.identity(3)
-    mat[:2, 2] = pos
-    return mat
-
-
 def to_screen_coords(h, w, pos):
-    y, x, _ = pos[0]
+    y, x = pos
     y = h / 2 - y
     x = w / 2 + x
     y = np.clip(y, 0, h).astype(int)

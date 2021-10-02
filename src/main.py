@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     world = World(args.filename)
     odometry = Odometry(mu=0, sigma=3)  # noised measurements
-    sensor = Sensor(radius=150, mu=0, sigma=1)  # noised measurements
+    sensor = Sensor(dist_range=150, fov=60, mu=0, sigma=1)  # noised measurements
     robot = Robot(odometry, sensor)
     navigation = Navigation(world.height, world.width)
     screen = pygame.display.set_mode([world.width * 2, world.height])
@@ -37,7 +37,7 @@ def main():
                 if event.key == pygame.K_DOWN:
                     robot.move(-moving_step, world)
 
-            navigation.take_measurements(odometry, sensor)
+                navigation.take_measurements(odometry, sensor)
 
         world.draw(screen)
         robot.draw(screen, world.height, world.width)
