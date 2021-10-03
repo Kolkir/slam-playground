@@ -3,12 +3,15 @@ import pygame
 
 from skimage.draw import line_aa
 
-from src.frame import Frame
-from src.icp import ICP
-from transform import to_screen_coords
+from frame import Frame
+from icp import ICP
+from playground.utils.transform import to_screen_coords
 
 
-class Navigation:
+class FrontEnd:
+    """
+    Takes raw sensor data and construct graph
+    """
     def __init__(self, world_h, world_w):
         self.__h = world_h
         self.__w = world_w
@@ -48,18 +51,19 @@ class Navigation:
             self.__map[obstacles[:, 0], obstacles[:, 1]] = 0
 
         # create key frame
-        # frame_candidate = Frame(odometry.position, odometry.rotation, sensor.get_obstacles())
-        # if len(self.__frames) > 0:
-        #     # check if we can align current frame with last ones
-        #     for key_frame in self.__frames[-self.__last_num_to_check:]:
-        #         tr, align_error = self.__icp.find_transform(key_frame, frame_candidate)
-        #         if align_error < self.__frame_align_error:
-        #             # if we were able to align - add new key frame
-        #             self.__frames.append(frame_candidate)
-        # else:
-        #     self.__frames.append(frame_candidate)
+        frame_candidate = Frame(odometry.position, odometry.rotation, sensor.get_obstacles())
+        if len(self.__frames) > 0:
+            # check if we can align current frame with last ones
+            for key_frame in self.__frames[-self.__last_num_to_check:]:
+                tr, align_error = self.__icp.find_transform(key_frame, frame_candidate)
+                if align_error < self.__frame_align_error:
+                    # if we were able to align - add new key frame
+                    self.__frames.append(frame_candidate)
+        else:
+            self.__frames.append(frame_candidate)
 
     def draw(self, screen, offset):
         transposed_map = np.transpose(self.__map)
         surf = pygame.surfarray.make_surface(transposed_map)
         screen.blit(surf, (offset, 0))
+

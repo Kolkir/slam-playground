@@ -1,6 +1,6 @@
 import numpy as np
 
-from body import Body
+from playground.environment.body import Body
 
 
 class Odometry(Body):

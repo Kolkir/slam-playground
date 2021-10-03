@@ -1,11 +1,11 @@
 import pygame
 import argparse
 
-from navigation import Navigation
-from robot import Robot
-from odometry import Odometry
-from sensor import Sensor
-from world import World
+from playground.rawsensorsview import RawSensorsView
+from playground.robot import Robot
+from playground.odometry import Odometry
+from playground.sensor import Sensor
+from playground.environment.world import World
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     odometry = Odometry(mu=0, sigma=3)  # noised measurements
     sensor = Sensor(dist_range=150, fov=60, mu=0, sigma=1)  # noised measurements
     robot = Robot(odometry, sensor)
-    navigation = Navigation(world.height, world.width)
+    sensorsView = RawSensorsView(world.height, world.width)
     screen = pygame.display.set_mode([world.width * 2, world.height])
     rotation_step = 15  # degrees
     moving_step = 15  # points
@@ -37,11 +37,11 @@ def main():
                 if event.key == pygame.K_DOWN:
                     robot.move(-moving_step, world)
 
-                navigation.take_measurements(odometry, sensor)
+                sensorsView.take_measurements(odometry, sensor)
 
         world.draw(screen)
         robot.draw(screen, world.height, world.width)
-        navigation.draw(screen, world.width)
+        sensorsView.draw(screen, world.width)
         pygame.display.flip()
 
     pygame.quit()

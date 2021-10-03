@@ -1,6 +1,6 @@
 import pygame
-from body import Body
-from transform import to_screen_coords
+from playground.environment.body import Body
+from playground.utils.transform import to_screen_coords
 
 
 class Robot(Body):

@@ -4,7 +4,7 @@ import pygame
 import numpy as np
 from skimage.draw import line_aa
 
-from src.transform import create_rotation_matrix, to_screen_coords
+from playground.utils.transform import to_screen_coords
 
 
 class Sensor:
@@ -47,9 +47,8 @@ class Sensor:
             obstacles_coords = np.array(obstacles_coords)
             obstacles_coords -= start_pos
 
-            noise_x = int(np.random.normal(self.__mu, self.__sigma))
-            noise_y = int(np.random.normal(self.__mu, self.__sigma))
-            obstacles_coords += np.array([[noise_y, noise_x]])
+            noise = np.random.normal(self.__mu, self.__sigma, size=obstacles_coords.shape)
+            obstacles_coords += noise.astype(int)
 
             obstacles_coords = np.clip(obstacles_coords, [-world.height // 2 + 1, -world.width // 2 + 1],
                                        [world.height // 2 - 1, world.width // 2 - 1])

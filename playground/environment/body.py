@@ -1,13 +1,14 @@
 import numpy as np
-from transform import create_rotation_matrix
+from playground.utils.transform import create_rotation_matrix
 
 
 class Body:
     """
         Physical environment simulation element
     """
+
     def __init__(self):
-        self.__pos = np.zeros((2))
+        self.__pos = np.zeros(2)
         self.__rotation_matrix = np.identity(3)
 
     def rotate(self, angle):
@@ -18,9 +19,9 @@ class Body:
         self.__pos = self.try_move(dist)
 
     def try_move(self, dist):
-        dir = self.__get_dir()
+        direction = self.__get_dir()
         new_pos = self.__pos.copy()
-        new_pos += dir * dist
+        new_pos += direction * dist
         return new_pos
 
     @property
@@ -40,7 +41,7 @@ class Body:
         return self.__rotation_matrix
 
     def __get_dir(self):
-        dir = np.array([[1, 0, 1]])
-        dir = np.matmul(self.__rotation_matrix, dir.T)
-        dir = np.reshape(dir, (1, 3))[0, :2]
-        return dir
+        direction = np.array([[1, 0, 1]])
+        direction = np.matmul(self.__rotation_matrix, direction.T)
+        direction = np.reshape(direction, (1, 3))[0, :2]
+        return direction

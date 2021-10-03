@@ -17,4 +17,3 @@ def to_screen_coords(h, w, pos):
     y = np.clip(y, 0, h).astype(int)
     x = np.clip(x, 0, w).astype(int)
     return x, y
-

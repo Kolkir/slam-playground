@@ -1,6 +1,6 @@
 class Frame:
     def __init__(self, position, rotation, observed_points):
-        self.transform = position
+        self.position = position
         self.rotation = rotation
         self.__observed_points = observed_points
 
