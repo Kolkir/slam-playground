@@ -4,7 +4,7 @@ import pygame
 import numpy as np
 from skimage.draw import line_aa
 
-from playground.utils.transform import to_screen_coords
+from playground.utils.transform import to_screen_coords, make_direction, transform_points
 
 
 class Sensor:
@@ -25,10 +25,11 @@ class Sensor:
     def get_obstacles(self):
         return self.__obstacles
 
-    def scan(self, position, direction, world):
+    def scan(self, position, rotation, world):
         # do ray tracing
         obstacles_coords = []
         start_pos = position
+        direction = make_direction(rotation)
         for circle_dir in self.__circle_coords:
             dot_product = np.dot(direction, circle_dir)
             scan_angle = math.acos(np.clip(dot_product, -1., 1))
@@ -45,13 +46,13 @@ class Sensor:
 
         if len(obstacles_coords) > 0:
             obstacles_coords = np.array(obstacles_coords)
+            # Transform obstacles into the sensor/robot coordinate system
             obstacles_coords -= start_pos
+            obstacles_coords = transform_points(obstacles_coords, np.linalg.inv(rotation))
 
+            # Adding noise
             noise = np.random.normal(self.__mu, self.__sigma, size=obstacles_coords.shape)
             obstacles_coords += noise.astype(int)
-
-            obstacles_coords = np.clip(obstacles_coords, [-world.height // 2 + 1, -world.width // 2 + 1],
-                                       [world.height // 2 - 1, world.width // 2 - 1])
 
             self.__obstacles = obstacles_coords
         else:
@@ -66,7 +67,7 @@ class Sensor:
         dir = dir.rotate(-self.__fov)
         end_pos2 = start_pos + dir * self.__dist_range
         start_pos = to_screen_coords(h, w, start_pos)
-        end_pos1 = to_screen_coords(h, w, end_pos1)
-        end_pos2 = to_screen_coords(h, w, end_pos2)
+        end_pos1 = to_screen_coords(h, w, end_pos1, clip=False)
+        end_pos2 = to_screen_coords(h, w, end_pos2, clip=False)
         pygame.draw.line(screen, color=color, start_pos=start_pos, end_pos=end_pos1, width=2)
         pygame.draw.line(screen, color=color, start_pos=start_pos, end_pos=end_pos2, width=2)

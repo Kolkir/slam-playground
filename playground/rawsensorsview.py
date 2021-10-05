@@ -2,7 +2,7 @@ import numpy as np
 import pygame
 
 from skimage.draw import line_aa
-from playground.utils.transform import to_screen_coords
+from playground.utils.transform import to_screen_coords, transform_points
 
 
 class RawSensorsView:
@@ -29,6 +29,8 @@ class RawSensorsView:
         obstacles = sensor.get_obstacles()
         if obstacles is not None:
             obstacles = obstacles.copy()
+            # convert points into world coordinate system
+            obstacles = transform_points(obstacles, odometry.rotation)
             obstacles += odometry.position[:2].astype(int)
             obstacles[:, 0] = self.__h // 2 - obstacles[:, 0]
             obstacles[:, 1] += self.__w // 2
