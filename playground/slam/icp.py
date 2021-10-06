@@ -1,9 +1,7 @@
 import math
-
-from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
-from playground.utils.transform import transform_points, create_rotation_matrix_yx, create_rotation_matrix_2xy
+from playground.utils.transform import create_rotation_matrix_yx, create_rotation_matrix_2xy
 
 
 class ICP:
@@ -12,14 +10,8 @@ class ICP:
     """
 
     def __init__(self, max_iterations=20, tolerance=0.001):
-        self.__knn = NearestNeighbors(n_neighbors=1)
         self.__max_iterations = max_iterations
         self.__tolerance = tolerance
-
-    def __nearest_neighbors(self, points_a, points_b):
-        estimator = self.__knn.fit(points_b)
-        distances, indices = estimator.kneighbors(points_a, return_distance=True)
-        return distances.ravel(), indices.ravel()
 
     def find_transform(self, points_a, points_b, iterations=100, tolerance=1):
         # swap x - y

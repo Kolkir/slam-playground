@@ -5,7 +5,7 @@ from sklearn.neighbors import NearestNeighbors
 
 from playground.slam.frame import Frame
 from playground.slam.icp import ICP
-from playground.utils.transform import transform_points, to_screen_coords, get_rotation_angle
+from playground.utils.transform import to_screen_coords
 
 
 class FrontEnd:
