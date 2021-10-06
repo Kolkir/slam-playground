@@ -5,7 +5,7 @@ from sklearn.neighbors import NearestNeighbors
 
 from playground.slam.frame import Frame
 from playground.slam.icp import ICP
-from playground.utils.transform import to_screen_coords
+from playground.utils.transform import to_screen_coords, transform_points
 
 
 class FrontEnd:
@@ -73,12 +73,14 @@ class FrontEnd:
         # Clear the occupancy map
         self.__local_map = np.full((self.__h, self.__w), 255, dtype=np.uint8)
         current_pos = np.array([0., 0., 1.])
-        current_dir = np.array([1., 0., 1.])
+        main_dir = np.array([1., 0., 1.])
+        current_rot = np.identity(3)
         prev_pos = None
         for frame in self.__frames:
-            current_dir = current_dir.dot(frame.rotation.T)
-            current_pos[:2] += current_dir[:2] * np.linalg.norm(frame.position, ord=2)
-
+            prev_frame_pos = current_pos
+            current_rot = frame.rotation @ current_rot
+            frame_pos = np.array([frame.position[0], frame.position[1], 1.])
+            current_pos += current_rot @ frame_pos
 
             # draw position
             position = to_screen_coords(self.__h, self.__w, current_pos[:2])
@@ -91,16 +93,19 @@ class FrontEnd:
                 self.__local_map[position[1], position[0]] = 0
             prev_pos = position
 
-            # # move points into the world coordinate system
-            # points = transform_points(frame.observed_points, current_rot)
-            # points += current_pos
-            # # convert them into map coordinate system
-            # points[:, 0] = self.__h // 2 - points[:, 0]
-            # points[:, 1] += self.__w // 2
-            # obstacles = np.clip(points, [0, 0],
-            #                     [self.__h - 1, self.__w - 1])
-            # # draw
-            # self.__local_map[points[:, 0], points[:, 1]] = 0
+            # move points into the world coordinate system
+            points = frame.observed_points[:, :2]
+            points = transform_points(points, current_rot, target_type=float)
+            points += frame.position + prev_frame_pos[:2]
+            points = points.astype(int)
+
+            # convert them into map coordinate system
+            points[:, 0] = self.__h // 2 - points[:, 0]
+            points[:, 1] += self.__w // 2
+            points = np.clip(points, [0, 0],
+                                [self.__h - 1, self.__w - 1])
+            # draw
+            self.__local_map[points[:, 0], points[:, 1]] = 0
 
     def draw(self, screen, offset):
         self.generate_local_map()

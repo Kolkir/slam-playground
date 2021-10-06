@@ -82,10 +82,9 @@ def main():
         if simulation_mode == SimulationMode.ICP_ADJUSTMENT:
             slam_front_end.draw(screen, offset=world.width)
             screen.blit(icp_text_surface, dest=text_pos)
-        if simulation_mode == SimulationMode.ICP_POSE_GRAPH_ADJUSTMEN:
+        if simulation_mode == SimulationMode.ICP_POSE_GRAPH_ADJUSTMENT:
             # TODO: Draw SLAM results
             screen.blit(slam_text_surface, dest=text_pos)
-
 
         pygame.display.flip()
 
