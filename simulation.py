@@ -33,6 +33,11 @@ def main():
 
     # Initialize rendering
     screen = pygame.display.set_mode([world.width * 2, world.height])
+    font = pygame.font.Font(pygame.font.get_default_font(), 24)
+    sensors_text_surface = font.render('Sensors', True, (255, 0, 0))
+    icp_text_surface = font.render('ICP', True, (255, 0, 0))
+    slam_text_surface = font.render('Pose Graph', True, (255, 0, 0))
+    text_pos = (15, 15)
 
     # Robot movement configuration
     rotation_step = 10  # degrees
@@ -73,8 +78,15 @@ def main():
         robot.draw(screen, world.height, world.width)
         if simulation_mode == SimulationMode.RAW_SENSORS:
             sensors_view.draw(screen, offset=world.width)
+            screen.blit(sensors_text_surface, dest=text_pos)
         if simulation_mode == SimulationMode.ICP_ADJUSTMENT:
             slam_front_end.draw(screen, offset=world.width)
+            screen.blit(icp_text_surface, dest=text_pos)
+        if simulation_mode == SimulationMode.ICP_POSE_GRAPH_ADJUSTMEN:
+            # TODO: Draw SLAM results
+            screen.blit(slam_text_surface, dest=text_pos)
+
+
         pygame.display.flip()
 
     pygame.quit()
