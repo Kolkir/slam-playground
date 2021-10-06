@@ -25,8 +25,8 @@ def main():
 
     # Create simulation objects
     world = World(args.filename)
-    odometry = Odometry(mu=0, sigma=0)  # noised measurements
-    sensor = Sensor(dist_range=350, fov=90, mu=0, sigma=0)  # noised measurements
+    odometry = Odometry(mu=0, sigma=3)  # noised measurements
+    sensor = Sensor(dist_range=350, fov=90, mu=0, sigma=1)  # noised measurements
     robot = Robot(odometry, sensor)
     sensors_view = RawSensorsView(world.height, world.width)
     slam_front_end = playground.slam.frontend.FrontEnd(world.height, world.width)
