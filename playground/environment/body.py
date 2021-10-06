@@ -1,5 +1,5 @@
 import numpy as np
-from playground.utils.transform import create_rotation_matrix, make_direction
+from playground.utils.transform import create_rotation_matrix_yx, make_direction
 
 
 class Body:
@@ -12,7 +12,7 @@ class Body:
         self.__rotation_matrix = np.identity(3)
 
     def rotate(self, angle):
-        tr_mat = create_rotation_matrix(angle)
+        tr_mat = create_rotation_matrix_yx(angle)
         self.__rotation_matrix = np.matmul(self.__rotation_matrix, tr_mat)
 
     def move(self, dist):

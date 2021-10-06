@@ -1,4 +1,7 @@
+import math
+
 from PIL import Image
+from hilbertcurve.hilbertcurve import HilbertCurve
 import numpy as np
 import pygame
 
@@ -7,12 +10,18 @@ class World:
     """
         Physical environment simulation element
     """
+
     def __init__(self, map_file_name):
         self.__map_file_name = map_file_name
         self.__width = 0
         self.__height = 0
         self.__map = None
         self.read_map()
+
+        # Initialize Hilbert curve object for generating obstacle ids
+        max_side = max(self.__width, self.__height)
+        side_len = math.ceil(math.log2(max_side * max_side)) // 2
+        self.__hilbert_curve = HilbertCurve(p=side_len, n=2)
 
     def read_map(self):
         img = Image.open(self.__map_file_name)
@@ -61,5 +70,7 @@ class World:
         x = self.__width // 2 + pos[1]
         y = self.__height // 2 - pos[0]
         if 0 <= y < self.__height and 0 <= x < self.__width:
-            return self.__map[y, x] != 255
-        return True
+            if self.__map[y, x] != 255:
+                point_id = self.__hilbert_curve.distance_from_point([y, x])
+                return True, point_id
+        return False, None

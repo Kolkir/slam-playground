@@ -26,7 +26,7 @@ def main():
     # Create simulation objects
     world = World(args.filename)
     odometry = Odometry(mu=0, sigma=0)  # noised measurements
-    sensor = Sensor(dist_range=200, fov=250, mu=0, sigma=0)  # noised measurements
+    sensor = Sensor(dist_range=350, fov=90, mu=0, sigma=0)  # noised measurements
     robot = Robot(odometry, sensor)
     sensors_view = RawSensorsView(world.height, world.width)
     slam_front_end = playground.slam.frontend.FrontEnd(world.height, world.width)
@@ -34,9 +34,9 @@ def main():
     # Initialize rendering
     screen = pygame.display.set_mode([world.width * 2, world.height])
 
-    # Robot movement configuration, steps should me small enough make ICP works normally
-    rotation_step = 1  # degrees
-    moving_step = 5  # points
+    # Robot movement configuration
+    rotation_step = 10  # degrees
+    moving_step = 10  # points
 
     # make first initialization
     robot.move(0, world)
@@ -58,9 +58,9 @@ def main():
                 if event.key == pygame.K_s:
                     simulation_mode = SimulationMode.ICP_POSE_GRAPH_ADJUSTMENT
                 if event.key == pygame.K_LEFT:
-                    robot.rotate(-rotation_step, world)
-                if event.key == pygame.K_RIGHT:
                     robot.rotate(rotation_step, world)
+                if event.key == pygame.K_RIGHT:
+                    robot.rotate(-rotation_step, world)
                 if event.key == pygame.K_UP:
                     robot.move(moving_step, world)
                 if event.key == pygame.K_DOWN:

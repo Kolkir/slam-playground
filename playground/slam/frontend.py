@@ -1,6 +1,7 @@
 import numpy as np
 import pygame
 from skimage.draw import line_aa
+from sklearn.neighbors import NearestNeighbors
 
 from playground.slam.frame import Frame
 from playground.slam.icp import ICP
@@ -20,6 +21,26 @@ class FrontEnd:
         self.__frame_align_error = 10  # distance in pixels
         self.__icp = ICP()
         self.__frames = []
+        self.__knn = NearestNeighbors(n_neighbors=1)
+
+    def __find_frames_correspondences(self, frame_a, frame_b, min_dist=5):
+        ids_a = frame_a.observed_points[:, 2]
+        ids_a = ids_a.reshape((-1, 1))
+        ids_b = frame_b.observed_points[:, 2]
+        ids_b = ids_b.reshape((-1, 1))
+        estimator = self.__knn.fit(ids_b)
+        distances, indices = estimator.kneighbors(ids_a, return_distance=True)
+        # remove outliers
+        idx_a = []
+        idx_b = []
+        used_ids = set()
+        for d, i_b, i_a in zip(distances, indices.reshape((-1)).tolist(), range(ids_a.shape[0])):
+            if i_b not in used_ids:
+                if d <= min_dist:
+                    idx_a.append(i_a)
+                    idx_b.append(i_b)
+            used_ids.add(i_b)
+        return idx_a, idx_b
 
     def take_measurements(self, odometry, sensor):
         obstacles = sensor.get_obstacles()
@@ -27,19 +48,21 @@ class FrontEnd:
             # create key frame
             frame_candidate = Frame(odometry.position, odometry.rotation, obstacles.copy())
             if len(self.__frames) > 0:
-                # check if we can align current frame with the last ones
-                for key_frame in self.__frames[:-(self.__last_num_to_check+1):-1]:
-                    rot, pos, align_error = self.__icp.find_transform(frame_candidate, key_frame)
-                    rot_angle = get_rotation_angle(rot)
-                    # skip if position was changed < 1px and rotation < 1 degree
-                    if pos.mean() < 1. and rot_angle < 1.:
-                        return  # we already have the same frame
-                    if align_error < self.__frame_align_error:
-                        # if we were able to align - add new key frame
-                        frame_candidate.position = pos
-                        frame_candidate.rotation = rot
-                        self.__frames.append(frame_candidate)
-                        break
+                # check if we can align current frame with the last one
+                key_frame = self.__frames[-1]
+                idx_a, idx_b = self.__find_frames_correspondences(frame_candidate, key_frame)
+                points_a = frame_candidate.observed_points[idx_a, :2]
+                points_b = key_frame.observed_points[idx_b, :2]
+                rot, pos, align_error = self.__icp.find_transform(points_a, points_b)
+
+                if align_error <= self.__frame_align_error:
+                    # add a new key frame
+                    frame_candidate.position = pos
+                    frame_candidate.rotation = rot
+                    self.__frames.append(frame_candidate)
+                else:
+                    print("Failed to align frame")
+
             else:
                 self.__frames.append(frame_candidate)
 
@@ -49,10 +72,14 @@ class FrontEnd:
         """
         # Clear the occupancy map
         self.__local_map = np.full((self.__h, self.__w), 255, dtype=np.uint8)
-        current_pos = np.array([0, 0, 1])
+        current_pos = np.array([0., 0., 1.])
+        current_dir = np.array([1., 0., 1.])
         prev_pos = None
         for frame in self.__frames:
-            current_pos = current_pos.dot(frame.transform.T)
+            current_dir = current_dir.dot(frame.rotation.T)
+            current_pos[:2] += current_dir[:2] * np.linalg.norm(frame.position, ord=2)
+
+
             # draw position
             position = to_screen_coords(self.__h, self.__w, current_pos[:2])
             if prev_pos is not None:

@@ -1,12 +1,21 @@
 import numpy as np
 
 
-def create_rotation_matrix(angle):
+def create_rotation_matrix_yx(angle_degrees):
     mat = np.identity(3)
-    cos_value = np.cos(np.radians(angle))
-    sin_value = np.sin(np.radians(angle))
-    mat[:2, :2] = np.array(((cos_value, -sin_value),
-                            (sin_value, cos_value)))
+    cos_value = np.cos(np.radians(angle_degrees))
+    sin_value = np.sin(np.radians(angle_degrees))
+    mat[:2, :2] = np.array(((cos_value, sin_value),
+                            (-sin_value, cos_value)))
+    return mat
+
+
+def create_rotation_matrix_2xy(angle):
+    mat = np.identity(2)
+    cos_value = np.cos(angle)
+    sin_value = np.sin(angle)
+    mat[:, :] = np.array(((cos_value, -sin_value),
+                          (sin_value, cos_value)))
     return mat
 
 

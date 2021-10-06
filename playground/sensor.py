@@ -28,6 +28,7 @@ class Sensor:
     def scan(self, position, rotation, world):
         # do ray tracing
         obstacles_coords = []
+        obstacles_ids = []
         start_pos = position
         direction = make_direction(rotation)
         for circle_dir in self.__circle_coords:
@@ -40,12 +41,15 @@ class Sensor:
                 end_pos = end_pos.astype(int)
                 ys, xs, _ = line_aa(start_pos[0], start_pos[1], end_pos[0], end_pos[1])
                 for pos in zip(ys, xs):
-                    if world.is_obstacle(pos):
+                    is_obstacle, obstacle_id = world.is_obstacle(pos)
+                    if is_obstacle:
                         obstacles_coords.append(pos)
+                        obstacles_ids.append(obstacle_id)
                         break
 
         if len(obstacles_coords) > 0:
             obstacles_coords = np.array(obstacles_coords)
+            obstacles_ids = np.array(obstacles_ids).reshape((-1, 1))
             # Transform obstacles into the sensor/robot coordinate system
             obstacles_coords -= start_pos
             obstacles_coords = transform_points(obstacles_coords, np.linalg.inv(rotation))
@@ -54,7 +58,7 @@ class Sensor:
             noise = np.random.normal(self.__mu, self.__sigma, size=obstacles_coords.shape)
             obstacles_coords += noise.astype(int)
 
-            self.__obstacles = obstacles_coords
+            self.__obstacles = np.hstack([obstacles_coords, obstacles_ids])
         else:
             self.__obstacles = None
 

@@ -30,7 +30,7 @@ class RawSensorsView:
         if obstacles is not None:
             obstacles = obstacles.copy()
             # convert points into world coordinate system
-            obstacles = transform_points(obstacles, odometry.rotation)
+            obstacles = transform_points(obstacles[:, :2], odometry.rotation)
             obstacles += odometry.position[:2].astype(int)
             obstacles[:, 0] = self.__h // 2 - obstacles[:, 0]
             obstacles[:, 1] += self.__w // 2

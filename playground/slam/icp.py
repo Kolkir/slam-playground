@@ -1,7 +1,9 @@
+import math
+
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
-from playground.utils.transform import transform_points
+from playground.utils.transform import transform_points, create_rotation_matrix_yx, create_rotation_matrix_2xy
 
 
 class ICP:
@@ -19,65 +21,64 @@ class ICP:
         distances, indices = estimator.kneighbors(points_a, return_distance=True)
         return distances.ravel(), indices.ravel()
 
-    def __fit_transform(self, points_a, points_b):
-        assert points_a.shape == points_b.shape
+    def find_transform(self, points_a, points_b, iterations=100, tolerance=1):
+        # swap x - y
+        points_a = points_a[:, ::-1]
+        points_b = points_b[:, ::-1]
 
-        # move points to their centroids
-        center_a = np.mean(points_a, axis=0)
-        center_b = np.mean(points_b, axis=0)
-        centered_a = points_a - center_a
-        centered_b = points_b - center_b
+        # initial values for tx, ty, angle
+        params = np.array([0.0, 0.0, 0.0])
 
-        # compute the rotation matrix
-        h = np.dot(centered_a.T, centered_b)
-        u, s, vt = np.linalg.svd(h)
-        rot = np.dot(vt.T, u.T)
+        # adjusted_points = points_a.copy()
+        for i in range(iterations):
+            h_sum = np.zeros((3, 3))
+            b_sum = np.zeros(3)
 
-        # reflection case
-        if np.linalg.det(rot) < 0:
-            vt *= -1
-            rot = np.dot(vt.T, u.T)
+            # modify points with params
+            angle = params[2]
+            rot = create_rotation_matrix_2xy(angle)
+            adjusted_points = points_a.dot(rot.T)
+            adjusted_points += params[:2]
 
-        # compute translation
-        pos = center_b - center_a.dot(rot.T)
+            # test if we can stop
+            distances = self.__get_distances(adjusted_points, points_b)
+            mean_error = np.mean(distances)
+            if mean_error < tolerance:
+                break
 
-        # homogeneous transformation
-        tr = np.identity(3)
-        tr[:, :] = rot
-        tr[:2, 2] = pos[:2]
+            for pa, pb, pm in zip(points_a, points_b, adjusted_points):
+                # Jacobian
+                j = np.array([[1, 0, -math.sin(angle) * pa[0] - math.cos(angle) * pa[1]],
+                              [0, 1, math.cos(angle) * pa[0] - math.sin(angle) * pa[1]]])
 
-        return tr, rot, pos
+                # Hesian aproximation
+                h = j.T @ j
+
+                # Right hand side
+                e = pm - pb
+                b = j.T @ e
+
+                # accumulate
+                h_sum += h
+                b_sum += b
+
+            params_update = -np.linalg.pinv(h_sum) @ b_sum
+            params += params_update
+
+        # Calculate an error
+        rot = create_rotation_matrix_2xy(params[2])
+        adjusted_points = points_a.dot(rot.T)
+        adjusted_points += params[:2]
+        distances = self.__get_distances(adjusted_points, points_b)
+        mean_error = np.mean(distances)
+
+        # make result
+        rot3 = create_rotation_matrix_yx(np.degrees(params[2]))
+        pos = params[:2][::-1]
+
+        return rot3, pos, mean_error
 
     def __get_distances(self, points_a, points_b):
         assert points_a.shape == points_b.shape
         distances = np.linalg.norm(points_a - points_b, axis=1)
         return distances
-
-    def find_transform(self, frame_a, frame_b, indices=None):
-        """
-        Finds relative transformation between frames scans in local coordinates
-        """
-        # make points homogeneous
-        points_a = np.hstack([frame_a.observed_points, np.ones((frame_a.observed_points.shape[0], 1))])
-        points_b = np.hstack([frame_b.observed_points, np.ones((frame_b.observed_points.shape[0], 1))])
-
-        # hold initial points_a
-        points_initial = points_a.copy()
-
-        prev_error = 0
-        for i in range(self.__max_iterations):
-            if indices is None:
-                distances, indices = self.__nearest_neighbors(points_a, points_b)
-            else:
-                distances = self.__get_distances(points_a, points_b[indices, :])
-            mean_error = np.mean(distances)
-            if np.abs(prev_error - mean_error) < self.__tolerance:
-                break
-            else:
-                tr, _, _ = self.__fit_transform(points_a, points_b[indices, :])
-                points_a = points_a.dot(tr.T)
-            prev_error = mean_error
-
-        _, rot, pos = self.__fit_transform(points_initial, points_a)
-
-        return rot, pos[:2], prev_error
