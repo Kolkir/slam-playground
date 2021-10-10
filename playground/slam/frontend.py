@@ -12,6 +12,7 @@ class FrontEnd:
     """
     Takes raw sensor data and construct graph
     """
+
     def __init__(self, world_h, world_w):
         self.__h = world_h
         self.__w = world_w
@@ -42,29 +43,56 @@ class FrontEnd:
             used_ids.add(i_b)
         return idx_a, idx_b
 
-    def take_measurements(self, odometry, sensor):
+    def add_key_frame(self, sensor):
+        frame_candidate = self.create_new_frame(sensor)
+        if frame_candidate:
+            if len(self.__frames) > 0:
+                # align current frame with the last one
+                key_frame = self.__frames[-1]
+                if not self.align_new_frame(frame_candidate, key_frame):
+                    print('Failed to align frame"')
+                    return False
+            self.__frames.append(frame_candidate)
+            return True
+        else:
+            return False
+
+    def create_loop_closure(self, sensor):
+        frame_candidate = self.create_new_frame(sensor)
+        if frame_candidate:
+            if len(self.__frames) > 0:
+                # align current frame with the first one
+                key_frame = self.__frames[0]
+                if self.align_new_frame(frame_candidate, key_frame):
+                    return frame_candidate
+                else:
+                    print('Failed to align frame"')
+        return None
+
+    def align_new_frame(self, frame_candidate, key_frame):
+        idx_a, idx_b = self.__find_frames_correspondences(frame_candidate, key_frame)
+        points_a = frame_candidate.observed_points[idx_a, :2]
+        points_b = key_frame.observed_points[idx_b, :2]
+        rot, pos, align_error = self.__icp.find_transform(points_a, points_b)
+
+        if align_error <= self.__frame_align_error:
+            frame_candidate.rotation = rot @ key_frame.rotation  # initial guess
+
+            frame_candidate.position[:2] = pos
+            frame_candidate.position = frame_candidate.rotation @ frame_candidate.position
+            frame_candidate.position += key_frame.position  # initial guess
+
+            frame_candidate.relative_icp_position = pos
+            frame_candidate.relative_icp_rotation = rot
+            return True
+        else:
+            return False
+
+    def create_new_frame(self, sensor):
         obstacles = sensor.get_obstacles()
         if obstacles is not None:
-            # create key frame
-            frame_candidate = Frame(odometry.position, odometry.rotation, obstacles.copy())
-            if len(self.__frames) > 0:
-                # check if we can align current frame with the last one
-                key_frame = self.__frames[-1]
-                idx_a, idx_b = self.__find_frames_correspondences(frame_candidate, key_frame)
-                points_a = frame_candidate.observed_points[idx_a, :2]
-                points_b = key_frame.observed_points[idx_b, :2]
-                rot, pos, align_error = self.__icp.find_transform(points_a, points_b)
-
-                if align_error <= self.__frame_align_error:
-                    # add a new key frame
-                    frame_candidate.position = pos
-                    frame_candidate.rotation = rot
-                    self.__frames.append(frame_candidate)
-                else:
-                    print("Failed to align frame")
-
-            else:
-                self.__frames.append(frame_candidate)
+            return Frame(obstacles.copy())
+        return None
 
     def generate_local_map(self):
         """
@@ -72,18 +100,10 @@ class FrontEnd:
         """
         # Clear the occupancy map
         self.__local_map = np.full((self.__h, self.__w), 255, dtype=np.uint8)
-        current_pos = np.array([0., 0., 1.])
-        main_dir = np.array([1., 0., 1.])
-        current_rot = np.identity(3)
         prev_pos = None
         for frame in self.__frames:
-            prev_frame_pos = current_pos
-            current_rot = frame.rotation @ current_rot
-            frame_pos = np.array([frame.position[0], frame.position[1], 1.])
-            current_pos += current_rot @ frame_pos
-
             # draw position
-            position = to_screen_coords(self.__h, self.__w, current_pos[:2])
+            position = to_screen_coords(self.__h, self.__w, frame.position[:2])
             if prev_pos is not None:
                 rr, cc, _ = line_aa(prev_pos[1], prev_pos[0], position[1], position[0])
                 rr = np.clip(rr, 0, self.__h - 1)
@@ -95,15 +115,15 @@ class FrontEnd:
 
             # move points into the world coordinate system
             points = frame.observed_points[:, :2]
-            points = transform_points(points, current_rot, target_type=float)
-            points += frame.position + prev_frame_pos[:2]
+            points = transform_points(points, frame.rotation, target_type=float)
+            points += frame.position[:2]
             points = points.astype(int)
 
             # convert them into map coordinate system
             points[:, 0] = self.__h // 2 - points[:, 0]
             points[:, 1] += self.__w // 2
             points = np.clip(points, [0, 0],
-                                [self.__h - 1, self.__w - 1])
+                             [self.__h - 1, self.__w - 1])
             # draw
             self.__local_map[points[:, 0], points[:, 1]] = 0
 
@@ -113,3 +133,5 @@ class FrontEnd:
         surf = pygame.surfarray.make_surface(transposed_map)
         screen.blit(surf, (offset, 0))
 
+    def get_frames(self):
+        return self.__frames
