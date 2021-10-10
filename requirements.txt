@@ -3,3 +3,5 @@ pygame>=2.0.1
 Pillow>=8.3.2
 scikit-image>=0.18.3
 scikit-learn>=1.0
+gtsam>=4.1.1.dev3
+hilbertcurve>=2.0.5
