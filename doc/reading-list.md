@@ -2,3 +2,4 @@
 2. [SLAM Tutorial@ICRA 2016](http://www.diag.uniroma1.it//~labrococo/tutorial_icra_2016/)
 3. [A Tutorial on Graph-Based SLAM](http://www2.informatik.uni-freiburg.de/~stachnis/pdf/grisetti10titsmag.pdf)
 4. [Mobile Sensing and Robotics 2 – Stachniss (2021)](https://www.ipb.uni-bonn.de/msr2-2021/)
+5. [Efficient Sparse Pose Adjustment for 2D Mapping](http://ais.informatik.uni-freiburg.de/publications/papers/konolige10iros.pdf)
