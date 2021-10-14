@@ -1,10 +1,10 @@
 from playground.slam.frame import Frame
-from playground.slam.posegraph import PoseGraph
+from playground.slam.gtsamposegraph import GTSAMPoseGraph
 
 
 class BackEnd:
     def __init__(self, edge_sigma, angle_sigma):
-        self.__pose_graph = PoseGraph(edge_sigma_x=edge_sigma, edge_sigma_y=edge_sigma, edge_sigma_angle=angle_sigma)
+        self.__pose_graph = GTSAMPoseGraph(edge_sigma_x=edge_sigma, edge_sigma_y=edge_sigma, edge_sigma_angle=angle_sigma)
 
     def update_frames(self, frames: list[Frame], loop_frame: Frame):
         """
