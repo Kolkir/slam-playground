@@ -21,7 +21,6 @@ class ICP:
         # initial values for tx, ty, angle
         params = np.array([0.0, 0.0, 0.0])
 
-        # adjusted_points = points_a.copy()
         for i in range(iterations):
             h_sum = np.zeros((3, 3))
             b_sum = np.zeros(3)
@@ -43,7 +42,7 @@ class ICP:
                 j = np.array([[1, 0, -math.sin(angle) * pa[0] - math.cos(angle) * pa[1]],
                               [0, 1, math.cos(angle) * pa[0] - math.sin(angle) * pa[1]]])
 
-                # Hesian aproximation
+                # Hessian approximation
                 h = j.T @ j
 
                 # Right hand side
