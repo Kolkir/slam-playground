@@ -5,7 +5,7 @@ from playground.slam.posegraph import PoseGraph
 
 
 class BackEnd:
-    def __init__(self, edge_sigma, angle_sigma, graph_type='basic'):
+    def __init__(self, edge_sigma, angle_sigma):
         self.__pose_graph = PoseGraph(edge_sigma_x=edge_sigma, edge_sigma_y=edge_sigma,
                                       edge_sigma_angle=angle_sigma)
 

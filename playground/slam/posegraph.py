@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
 
-from playground.utils.transform import wrap_to_pi, v2t, t2v
+from playground.utils.transform import v2t, t2v
 
 
 class PoseGraph:
@@ -25,7 +25,7 @@ class PoseGraph:
         """
         if not np.isscalar(rot):
             rot = np.arctan2(rot[1, 0], rot[0, 0])
-        self.__values[index] = np.array([ty, ty, rot])
+        self.__values[index] = np.array([tx, ty, rot])
 
     def add_factor_edge(self, vertex_index_a, vertex_index_b, tx, ty, rot, noise_model=None):
         if vertex_index_a in self.__values.keys() and vertex_index_b in self.__values.keys():
@@ -136,8 +136,8 @@ class PoseGraph:
                 break
 
     def __update_values(self, values_update):
-        for id, update in enumerate(values_update):
-            self.__values[id] += update
+        for value_id, update in enumerate(values_update):
+            self.__values[value_id] += update
         pass
 
     def get_pose_at(self, index):
@@ -150,4 +150,3 @@ class PoseGraph:
     def get_vector_pose_at(self, index):
         v = self.__values[index]
         return v
-
