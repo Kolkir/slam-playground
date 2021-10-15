@@ -41,3 +41,28 @@ def transform_points(points, matrix, target_type=int):
     points = np.hstack([points, np.ones((points.shape[0], 1))])
     aligned_points = points.dot(matrix.T)
     return aligned_points[:, :2].astype(target_type)
+
+
+def wrap_to_pi(angle):
+    """
+    Wraps the angle in radians into -pi to pi interval
+    """
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
+
+def t2v(tr):
+    # homogeneous transformation to vector
+    v = np.zeros((3, 1))
+    v[:2, 0] = tr[:2, 2]
+    v[2] = np.arctan2(tr[1, 0], tr[0, 0])
+    return v
+
+
+def v2t(v):
+    # vector to homogeneous transformation
+    c = np.cos(v[2])
+    s = np.sin(v[2])
+    tr = np.array([[c, -s, v[0]],
+                   [s, c, v[1]],
+                   [0, 0, 1]])
+    return tr

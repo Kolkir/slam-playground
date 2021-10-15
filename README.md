@@ -11,9 +11,16 @@ Press 'r' to view the raw map built from the odometry and sensor measurements.
 
 Press 'i' to view map built from sensor measurements aligned with the ICP algorithm.
 
-To update map and the robot path with the Pose Graph optimization, you have to navigate robot around the map and return it to the starting position in the center, the robot have to look in same direction as at the beginning. Then press the 's' key.
+To update map and the robot path with the Pose Graph optimization, you have to navigate robot around the map and return it to the starting position in the center, the robot have to look in same direction as at the beginning. Then press the 's' or 'g' key.
+The 's' key will start naive basic SLAM implementation and the 'g' key will launch solution based on [GTSAM](https://gtsam.org/) library.
 
 To change the world map you can edit the 'map.png' file in the `assets` folder.
+
+### Used resources
+
+Please take a look in to the `doc` folder to find the reading list.
+
+Also, you can find there the [jupyter notebook](https://github.com/Kolkir/slam-playground/blob/main/doc/slam_se2_derivation.ipynb) with derivation of all formulas for Jacobians and Hessian for SLAM implementation with corresponding Python examples.    
 
 ### How to configure:
 

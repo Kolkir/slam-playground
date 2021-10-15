@@ -4,6 +4,7 @@ from enum import Enum
 
 import playground.slam.frontend
 import playground.slam.backend
+import playground.slam.gtsambackend
 from playground.rawsensorsview import RawSensorsView
 from playground.robot import Robot
 from playground.odometry import Odometry
@@ -31,6 +32,7 @@ def main():
     robot = Robot(odometry, sensor)
     sensors_view = RawSensorsView(world.height, world.width)
     slam_front_end = playground.slam.frontend.FrontEnd(world.height, world.width)
+    gtsam_slam_back_end = playground.slam.gtsambackend.GTSAMBackEnd(edge_sigma=0.5, angle_sigma=0.1)
     slam_back_end = playground.slam.backend.BackEnd(edge_sigma=0.5, angle_sigma=0.1)
 
     # Initialize rendering
@@ -38,7 +40,6 @@ def main():
     font = pygame.font.Font(pygame.font.get_default_font(), 24)
     sensors_text_surface = font.render('Sensors', True, (255, 0, 0))
     icp_text_surface = font.render('ICP', True, (255, 0, 0))
-    slam_text_surface = font.render('Pose Graph', True, (255, 0, 0))
     text_pos = (15, 15)
 
     # Robot movement configuration
@@ -66,6 +67,11 @@ def main():
                     # we assume that we detect a loop so can try to optimize pose graph
                     loop_frame = slam_front_end.create_loop_closure(sensor)
                     slam_back_end.update_frames(slam_front_end.get_frames(), loop_frame)
+                    break
+                if event.key == pygame.K_g:
+                    # we assume that we detect a loop so can try to optimize pose graph
+                    loop_frame = slam_front_end.create_loop_closure(sensor)
+                    gtsam_slam_back_end.update_frames(slam_front_end.get_frames(), loop_frame)
                     break
                 if event.key == pygame.K_LEFT:
                     robot.rotate(rotation_step, world)
