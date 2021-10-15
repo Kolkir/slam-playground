@@ -5,3 +5,4 @@ scikit-image>=0.18.3
 scikit-learn>=1.0
 gtsam>=4.1.1.dev3
 hilbertcurve>=2.0.5
+scipy>=1.7.1
