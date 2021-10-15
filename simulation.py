@@ -3,7 +3,7 @@ import argparse
 from enum import Enum
 
 import playground.slam.frontend
-# import playground.slam.backend
+import playground.slam.backend
 import playground.slam.gtsambackend
 from playground.rawsensorsview import RawSensorsView
 from playground.robot import Robot
@@ -32,7 +32,8 @@ def main():
     robot = Robot(odometry, sensor)
     sensors_view = RawSensorsView(world.height, world.width)
     slam_front_end = playground.slam.frontend.FrontEnd(world.height, world.width)
-    slam_back_end = playground.slam.gtsambackend.GTSAMBackEnd(edge_sigma=0.5, angle_sigma=0.1)
+    gtsam_slam_back_end = playground.slam.gtsambackend.GTSAMBackEnd(edge_sigma=0.5, angle_sigma=0.1)
+    slam_back_end = playground.slam.backend.BackEnd(edge_sigma=0.5, angle_sigma=0.1)
 
     # Initialize rendering
     screen = pygame.display.set_mode([world.width * 2, world.height])
@@ -66,6 +67,11 @@ def main():
                     # we assume that we detect a loop so can try to optimize pose graph
                     loop_frame = slam_front_end.create_loop_closure(sensor)
                     slam_back_end.update_frames(slam_front_end.get_frames(), loop_frame)
+                    break
+                if event.key == pygame.K_g:
+                    # we assume that we detect a loop so can try to optimize pose graph
+                    loop_frame = slam_front_end.create_loop_closure(sensor)
+                    gtsam_slam_back_end.update_frames(slam_front_end.get_frames(), loop_frame)
                     break
                 if event.key == pygame.K_LEFT:
                     robot.rotate(rotation_step, world)
