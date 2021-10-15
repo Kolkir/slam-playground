@@ -3,7 +3,8 @@ import argparse
 from enum import Enum
 
 import playground.slam.frontend
-import playground.slam.backend
+# import playground.slam.backend
+import playground.slam.gtsambackend
 from playground.rawsensorsview import RawSensorsView
 from playground.robot import Robot
 from playground.odometry import Odometry
@@ -31,14 +32,13 @@ def main():
     robot = Robot(odometry, sensor)
     sensors_view = RawSensorsView(world.height, world.width)
     slam_front_end = playground.slam.frontend.FrontEnd(world.height, world.width)
-    slam_back_end = playground.slam.backend.BackEnd(edge_sigma=0.5, angle_sigma=0.1)
+    slam_back_end = playground.slam.gtsambackend.GTSAMBackEnd(edge_sigma=0.5, angle_sigma=0.1)
 
     # Initialize rendering
     screen = pygame.display.set_mode([world.width * 2, world.height])
     font = pygame.font.Font(pygame.font.get_default_font(), 24)
     sensors_text_surface = font.render('Sensors', True, (255, 0, 0))
     icp_text_surface = font.render('ICP', True, (255, 0, 0))
-    slam_text_surface = font.render('Pose Graph', True, (255, 0, 0))
     text_pos = (15, 15)
 
     # Robot movement configuration

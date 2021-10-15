@@ -4,9 +4,9 @@ import numpy as np
 
 class GTSAMPoseGraph:
     def __init__(self, edge_sigma_x, edge_sigma_y, edge_sigma_angle):
-        self.__prior_sigma_x = 0.1
-        self.__prior_sigma_y = 0.1
-        self.__prior_sigma_theta = 0.05
+        self.__sigma_x = 0.1
+        self.__sigma_y = 0.1
+        self.__sigma_theta = 0.05
         self.__prior_pose_index = 0
         self.__isam2 = gtsam.ISAM2()
         self.__graph = gtsam.NonlinearFactorGraph()
@@ -17,10 +17,9 @@ class GTSAMPoseGraph:
         self.__optimization_result = None
 
     def define_prior(self):
-        prior_noise_model = gtsam.noiseModel.Diagonal.Sigmas(
-            np.array([self.__prior_sigma_x, self.__prior_sigma_y, self.__prior_sigma_theta]))
+        prior_model = gtsam.noiseModel.Diagonal.Sigmas(np.array([self.__sigma_x, self.__sigma_y, self.__sigma_theta]))
         prior_pose = gtsam.Pose2(0, 0, 0)
-        prior_factor = gtsam.PriorFactorPose2(self.__prior_pose_index, prior_pose, prior_noise_model)
+        prior_factor = gtsam.PriorFactorPose2(self.__prior_pose_index, prior_pose, prior_model)
         self.__graph.add(prior_factor)
         self.__values.insert(self.__prior_pose_index, prior_pose)  # it's an initial poses estimate
 
@@ -59,8 +58,8 @@ class GTSAMPoseGraph:
         self.__optimization_result = optimizer.optimize()
 
     def get_pose_at(self, index):
-        assert(self.__optimization_result is not None)
-        assert(index < self.__optimization_result.size())
+        assert (self.__optimization_result is not None)
+        assert (index < self.__optimization_result.size())
         pose = self.__optimization_result.atPose2(index)
         tx = pose.x()
         ty = pose.y()
