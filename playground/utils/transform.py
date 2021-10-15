@@ -19,15 +19,6 @@ def create_rotation_matrix_2xy(angle):
     return mat
 
 
-def create_rotation_matrix_2yx(angle):
-    mat = np.identity(2)
-    cos_value = np.cos(angle)
-    sin_value = np.sin(angle)
-    mat[:, :] = np.array(((cos_value, sin_value),
-                          (-sin_value, cos_value)))
-    return mat
-
-
 def to_screen_coords(h, w, pos, clip=True):
     y, x = pos
     y = h / 2 - y

@@ -7,7 +7,7 @@ from playground.utils.transform import wrap_to_pi, v2t, t2v
 
 class PoseGraph:
     def __init__(self, edge_sigma_x, edge_sigma_y, edge_sigma_angle):
-        self.__prior_pose_index = 0
+        self.__prior_pose_index = -1
         self.__factors = []
         self.__values = dict()
         # an information matrix is the inverse of a covariance matrix
@@ -23,13 +23,18 @@ class PoseGraph:
         Initial vertex(pose) estimation.
         Can come from odometry or ICP measurements
         """
-        self.__values[index] = np.array([tx, ty, wrap_to_pi(rot)])
+        if not np.isscalar(rot):
+            rot = np.arctan2(rot[1, 0], rot[0, 0])
+        self.__values[index] = np.array([ty, ty, rot])
 
     def add_factor_edge(self, vertex_index_a, vertex_index_b, tx, ty, rot, noise_model=None):
-        if noise_model is None:
-            noise_model = self.__edge_noise_model
-        factor = vertex_index_a, vertex_index_b, np.array([tx, ty, wrap_to_pi(rot)]), noise_model
-        self.__factors.append(factor)
+        if vertex_index_a in self.__values.keys() and vertex_index_b in self.__values.keys():
+            if noise_model is None:
+                noise_model = self.__edge_noise_model
+            if not np.isscalar(rot):
+                rot = np.arctan2(rot[1, 0], rot[0, 0])
+            factor = vertex_index_a, vertex_index_b, np.array([tx, ty, rot]), noise_model
+            self.__factors.append(factor)
 
     def clear(self):
         self.__factors.clear()
@@ -95,7 +100,6 @@ class PoseGraph:
                 b_j = -b_ij.T @ factor_noise_model @ e
 
                 def id2index(value_id):
-                    value_id -= 1
                     return slice((num_params * value_id), (num_params * (value_id + 1)))
 
                 # update the coefficient vector
@@ -114,7 +118,7 @@ class PoseGraph:
             # So we fix the position of the 1st vertex
             h[:num_params, :num_params] += np.eye(3)
 
-            values_update = -scipy.sparse.linalg.spsolve(h, b)
+            values_update = scipy.sparse.linalg.spsolve(h, b)
             values_update[np.isnan(values_update)] = 0
             values_update = np.reshape(values_update, (len(self.__values), num_params))
 
@@ -133,8 +137,17 @@ class PoseGraph:
 
     def __update_values(self, values_update):
         for id, update in enumerate(values_update):
-            self.__values[id + 1] += update
+            self.__values[id] += update
         pass
 
     def get_pose_at(self, index):
-        return self.__values[index]
+        v = self.__values[index]
+        v = v2t(v)
+        rot = np.identity(3)
+        rot[:2, :2] = v[:2, :2]
+        return v[0, 2], v[1, 2], rot
+
+    def get_vector_pose_at(self, index):
+        v = self.__values[index]
+        return v
+
